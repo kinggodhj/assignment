@@ -33,7 +33,7 @@ NUM_ENCODER_LAYERS = args.num_encoder_layers
 NUM_DECODER_LAYERS = args.num_decoder_layers
 NUM_EPOCHS = args.epochs
 
-writer = SummaryWriter('setting/emb:%s, nhead:%s, #enc:%s, #dec:%s, #epoch:%s, max_len:%s'%(EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS, NUM_DECODER_LAYERS, NUM_EPOCHS, MAX_LEN))
+writer = SummaryWriter('./runs/%s%s%s%s'%(EMB_SIZE, NUM_ENCODER_LAYERS, NUM_EPOCHS, MAX_LEN))
 
 def train(model, train_iter, optimizer):
     model.train()
