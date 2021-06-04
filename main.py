@@ -33,7 +33,7 @@ NUM_ENCODER_LAYERS = args.num_encoder_layers
 NUM_DECODER_LAYERS = args.num_decoder_layers
 NUM_EPOCHS = args.epochs
 
-writer = SummaryWriter()
+writer = SummaryWriter('setting/emb:%s, nhead:%s, #enc:%s, #dec:%s, #epoch:%s, max_len:%s'%(EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS, NUM_DECODER_LAYERS, NUM_EPOCHS, MAX_LEN))
 
 def train(model, train_iter, optimizer):
     model.train()
@@ -120,4 +120,4 @@ if __name__ == "__main__":
         print((f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f}, " f"Epoch time = {(end_time - start_time):.3f}s"))
         writer.add_scalar('Loss/train', train_loss, epoch)
         writer.add_scalar('Loss/Val', val_loss, epoch)
-    torch.save(transformer.state_dict(), './model/model%s.pkt'%(NUM_EPOCHS))
+    torch.save(transformer.state_dict(), './model/model%s%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE, MAX_LEN))
