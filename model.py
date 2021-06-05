@@ -14,7 +14,6 @@ class Seq2SeqTransformer(nn.Module):
         self.transformer_encoder = TransformerEncoder(encoder_layer, num_layers=num_encoder_layers)
         decoder_layer = TransformerDecoderLayer(d_model=emb_size, nhead=num_head, dim_feedforward=dim_feedforward)
         self.transformer_decoder = TransformerDecoder(decoder_layer, num_layers=num_decoder_layers)
-
         self.generator = nn.Linear(emb_size, tgt_vocab_size)
         self.src_tok_emb = TokenEmbedding(src_vocab_size, emb_size)
         self.tgt_tok_emb = TokenEmbedding(tgt_vocab_size, emb_size)
@@ -47,8 +46,7 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pos_embedding', pos_embedding)
 
     def forward(self, token_embedding):
-        return self.dropout(token_embedding +
-                            self.pos_embedding[:token_embedding.size(0),:])
+        return self.dropout(token_embedding + self.pos_embedding[:token_embedding.size(0),:])
 
 class TokenEmbedding(nn.Module):
     def __init__(self, vocab_size: int, emb_size):
@@ -56,6 +54,8 @@ class TokenEmbedding(nn.Module):
         self.embedding = nn.Embedding(vocab_size, emb_size)
         self.emb_size = emb_size
     def forward(self, tokens):
+        #if tokens.long() > self.embedding.size(0):
+        #    tokens = 
         return self.embedding(tokens.long()) * math.sqrt(self.emb_size)
 
 def generate_square_subsequent_mask(sz):

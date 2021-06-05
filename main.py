@@ -15,7 +15,7 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=128)
-parser.add_argument('--max_len', type=int, default=50)
+parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--emb_size', type=int, default=512)
 parser.add_argument('--nhead', type=int, default=8)
 parser.add_argument('--ffd_dim', type=int, default=512)
@@ -39,8 +39,6 @@ writer = SummaryWriter('./runs/%s%s%s%s'%(EMB_SIZE, NUM_ENCODER_LAYERS, NUM_EPOC
 def train(model, train_iter, optimizer):
     model.train()
     losses = 0
-    #for i in range(len(train_data) //BATCH_SIZE):
-    #    src, tgt = train_data.get_batch(i, BATCH_SIZE)
     for idx, (src, tgt) in enumerate(train_iter):
         src = src.to(DEVICE)
         tgt = tgt.to(DEVICE)
@@ -109,12 +107,17 @@ def get_bleu(model, val_iter_p):
 
 
 if __name__ == "__main__":
-    source_file = "./train_source.txt"
-    target_file = "./train_target.txt"
+    source_file = "./train_x.0.txt"
+    target_file = "./train_y.0.txt"
+    
+    val_source_file = "./train_x.1.txt"
+    val_target_file = "./train_y.1.txt"
 
-    train_data, val_data, voca_x, voca_y = setup(source_file, target_file, MAX_LEN)
+    train_data, voca_x, voca_y = setup(source_file, target_file, MAX_LEN)
     
     train_iter = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, collate_fn=train_data.get_batch)
+    
+    val_data, _, _ = setup(val_source_file, val_target_file, MAX_LEN, voca_x, voca_y)
     val_iter = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True, collate_fn=val_data.get_batch)
     
     val_iter_p = DataLoader(val_data, batch_size=1, shuffle=True, collate_fn=val_data.get_batch)
@@ -125,14 +128,14 @@ if __name__ == "__main__":
     EOS = voca_x['<eos>']
     BOS = voca_x['<bos>']
     PAD = voca_x['<pad>']
-
+    
     transformer = Seq2SeqTransformer(NUM_ENCODER_LAYERS, NUM_DECODER_LAYERS, NHEAD, EMB_SIZE, SRC_VOCAB_SIZE, TGT_VOCAB_SIZE, FFN_HID_DIM)
 
-    '''
+    
     for p in transformer.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)    
-    '''
+    
 
     transformer = transformer.to(DEVICE)
 

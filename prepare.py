@@ -34,23 +34,21 @@ def build_vocab(data):
     vocab = Vocab(counter, specials = ['<unk>', '<pad>', '<bos>', '<eos>'])
     return vocab    
 
-def setup(path1, path2, max_len):
+def setup(path1, path2, max_len, voca_x=None, voca_y=None):
     x = read_file(path1)
     y = read_file(path2)
     x, y = filterPairs(x, y, max_len)
     
     x, y = shuffle(x, y)
+   
+    if voca_x is not None:
+        train_data = SequenceDataset(x, y, max_len, voca_x, voca_y)
     
-    train_x = x[:int(len(x)*0.8)]
-    val_x = x[int(len(x)*0.8):]
-    
-    train_y = y[:int(len(x)*0.8)]
-    val_y = y[int(len(x)*0.8):]
+        return train_data, None, None
+    else:
+        voca_x = build_vocab(x)
+        voca_y = build_vocab(y)
 
-    voca_x = build_vocab(train_x)
-    voca_y = build_vocab(train_y)
+        train_data = SequenceDataset(x, y, max_len, voca_x, voca_y)
     
-    train_data = SequenceDataset(train_x, train_y, max_len, voca_x, voca_y)
-    val_data = SequenceDataset(val_x, val_y, max_len, voca_x, voca_y)
-
-    return train_data, val_data, voca_x, voca_y
+        return train_data, voca_x, voca_y

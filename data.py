@@ -19,19 +19,29 @@ class SequenceDataset(Dataset):
         self.eos = self.voca_x['<eos>']
         self.bos = self.voca_x['<bos>']
         self.pad = self.voca_x['<pad>']
+        self.unk = self.voca_x['<unk>']
 
     def __len__(self):
         return len(self.y)
 
     def __getitem__(self, idx):
-        x= [self.voca_x[word] for word in self.x[idx]]
-        y = [self.voca_y[word] for word in self.y[idx]] 
-        #x += [self.pad] * (self.max_len - len(x))
-        #y += [self.pad] * (self.max_len - len(y))
-	
-        #x = [self.bos] + x + [self.eos]
-        #y = [self.bos] + y + [self.bos]
+        #x_1= [self.voca_x[word] for word in self.x[idx]]
+        #y_1 = [self.voca_y[word] for word in self.y[idx]] 
+        
+        x = []
+        for word in self.x[idx]:
+            if self.voca_x[word] == 0:
+                x.append(self.unk)
+            else:
+                x.append(self.voca_x[word])
 
+        y = []
+        for word in self.y[idx]:
+            if self.voca_y[word] == 0:
+                y.append(self.unk)
+            else:
+                y.append(self.voca_y[word])
+     
         return torch.tensor(x), torch.tensor(y)
 
     '''
