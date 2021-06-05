@@ -120,7 +120,7 @@ if __name__ == "__main__":
     val_data, _, _ = setup(val_source_file, val_target_file, MAX_LEN, voca_x, voca_y)
     val_iter = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=True, collate_fn=val_data.get_batch)
     
-    val_iter_p = DataLoader(val_data, batch_size=1, shuffle=True, collate_fn=val_data.get_batch)
+    #val_iter_p = DataLoader(val_data, batch_size=1, shuffle=True, collate_fn=val_data.get_batch)
     
     SRC_VOCAB_SIZE = len(voca_x)
     TGT_VOCAB_SIZE = len(voca_y)
@@ -148,9 +148,9 @@ if __name__ == "__main__":
         transformer, train_loss = train(transformer, train_iter, optimizer)
         end_time = time.time()
         val_loss = evaluate(transformer, val_iter)
-        bleu = get_bleu(transformer, val_iter_p)
-        print((f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f}, BLEU score: {bleu:.3f}, " f"Epoch time = {(end_time - start_time):.3f}s"))
+        #bleu = get_bleu(transformer, val_iter_p)
+        print((f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f} " f"Epoch time = {(end_time - start_time):.3f}s"))
         writer.add_scalar('Loss/train', train_loss, epoch)
         writer.add_scalar('Loss/Val', val_loss, epoch)
-        writer.add_scalar('BLEU/Val', bleu, epoch)
+        #writer.add_scalar('BLEU/Val', bleu, epoch)
     torch.save(transformer.state_dict(), './model/model%s%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE, MAX_LEN))
