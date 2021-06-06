@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+import math
 from nltk.translate.bleu_score import sentence_bleu
 import time
 import pdb
@@ -16,12 +17,12 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--max_len', type=int, default=100)
-parser.add_argument('--emb_size', type=int, default=512)
+parser.add_argument('--emb_size', type=int, default=128)
 parser.add_argument('--nhead', type=int, default=8)
-parser.add_argument('--ffd_dim', type=int, default=512)
+parser.add_argument('--ffd_dim', type=int, default=128)
 parser.add_argument('--num_encoder_layers', type=int, default=3)
 parser.add_argument('--num_decoder_layers', type=int, default=3)
-parser.add_argument('--epochs', type=int, default=20)
+parser.add_argument('--epochs', type=int, default=200)
 
 args = parser.parse_args()
 
@@ -146,11 +147,15 @@ if __name__ == "__main__":
     for epoch in range(1, NUM_EPOCHS+1):
         start_time = time.time()
         transformer, train_loss = train(transformer, train_iter, optimizer)
+        train_ppl = math.exp(train_loss)
         end_time = time.time()
         val_loss = evaluate(transformer, val_iter)
+        val_ppl = math.exp(val_loss)
         #bleu = get_bleu(transformer, val_iter_p)
-        print((f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f} " f"Epoch time = {(end_time - start_time):.3f}s"))
+        print((f"Epoch: {epoch}, Train loss: {train_loss:.3f}, PPL: {train_ppl:.3f}, Val loss: {val_loss:.3f}, PPL: {val_ppl:.3f})  " f"Epoch time = {(end_time - start_time):.3f}s"))
         writer.add_scalar('Loss/train', train_loss, epoch)
         writer.add_scalar('Loss/Val', val_loss, epoch)
+        writer.add_scalar('PPL/train', train_ppl, epoch)
+        writer.add_scalar('PPL/Val', val_ppl, epoch)
         #writer.add_scalar('BLEU/Val', bleu, epoch)
-    torch.save(transformer.state_dict(), './model/model%s%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE, MAX_LEN))
+    torch.save(transformer.state_dict(), './model/model%s%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE, NUM_ENCODER_LAYERS))

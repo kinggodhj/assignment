@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+import math
 from nltk.translate.bleu_score import sentence_bleu
 import time
 import pdb
@@ -16,12 +17,11 @@ DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--max_len', type=int, default=100)
-parser.add_argument('--emb_size', type=int, default=512)
+parser.add_argument('--emb_size', type=int, default=128)
 parser.add_argument('--nhead', type=int, default=8)
-parser.add_argument('--ffd_dim', type=int, default=512)
+parser.add_argument('--ffd_dim', type=int, default=128)
 parser.add_argument('--num_encoder_layers', type=int, default=3)
 parser.add_argument('--num_decoder_layers', type=int, default=3)
-parser.add_argument('--epochs', type=int, default=20)
 parser.add_argument('--path', type=str, default='./model/')
 
 
@@ -52,27 +52,46 @@ def get_bleu(model, test_iter):
         target = tgt.tolist()
         target = sum(target, [])
         target = list(map(str, target))
-        
+        target = target[1:-1]
+
         pred = ys.tolist()
         pred = sum(pred, [])
         pred = list(map(str, pred))
-        print('result:', idx, 'labe:', target, 'generated:', pred)
+        pred = pred[1:-1]
+        if idx % 100 == 0:
+            print('result:', idx, 'label:', target, 'generated:', pred)
         bleu += sentence_bleu(target, pred)
 
     return bleu / len(test_iter)
 
+def evaluate(model, test_iter):
+    model.eval()
+    losses = 0
+    for idx, (src, tgt) in enumerate(test_iter):
+        src = src.to(DEVICE)
+        tgt = tgt.to(DEVICE)
+
+        tgt_input = tgt[:-1, :]
+
+        src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(src, tgt_input, PAD)
+
+        logits = model(src, tgt_input, src_mask, tgt_mask, src_padding_mask, tgt_padding_mask, src_padding_mask)
+        tgt_out = tgt[1:,:]
+        loss_fn = torch.nn.CrossEntropyLoss()
+        loss = loss_fn(logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
+        losses += loss.item()
+    return losses / len(test_iter)
 
 if __name__ == "__main__":
     
-    train_data = setup("./train_source.txt", "./train_target.txt", MAX_LEN)
+    train_data, voca_x, voca_y = setup("./train_x.0.txt", "./train_y.0.txt", MAX_LEN)
     
-    voca_x = build_vocab(train_data.x)
-    voca_y = build_vocab(train_data.y)
-   
     source_file = "./test_source.txt"
     target_file = "./test_target.txt"
 
-    test_data = setup(source_file, target_file, MAX_LEN)
+    test_data, _, _ = setup(source_file, target_file, MAX_LEN)
+    
+    train_iter = DataLoader(train_data, batch_size=1, shuffle=True, collate_fn=train_data.get_batch)
     
     test_iter = DataLoader(test_data, batch_size=1, shuffle=True, collate_fn=test_data.get_batch)
     
@@ -88,4 +107,14 @@ if __name__ == "__main__":
     transformer = transformer.to(DEVICE)
     transformer.load_state_dict(torch.load(PATH))
 
-    bleu = get_bleu(transformer, test_iter)
+    #train_bleu = get_bleu(transformer, train_iter)
+    #bleu = get_bleu(transformer, test_iter)
+    loss = evaluate(transformer, test_iter)
+    ppl = math.exp(loss)
+    
+    train_loss = evaluate(transformer, train_iter)
+    train_ppl = math.exp(train_loss)
+
+    print('Train PPL:', train_ppl, 'Test PPL:', ppl)
+    #print('train:', train_bleu, 'test:', bleu, 'PPL', ppl)
+
