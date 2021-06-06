@@ -158,4 +158,4 @@ if __name__ == "__main__":
         writer.add_scalar('PPL/train', train_ppl, epoch)
         writer.add_scalar('PPL/Val', val_ppl, epoch)
         #writer.add_scalar('BLEU/Val', bleu, epoch)
-    torch.save(transformer.state_dict(), './model/model%s%s%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS))
+    torch.save(transformer.state_dict(), './premodel/model%s%s%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS))

@@ -19,7 +19,6 @@ class CustomEncoderLayer(nn.Module):
 
         self.norm1 = LayerNorm(d_model)
         self.norm2 = LayerNorm(d_model)
-        self.norm3 = LayerNorm(d_model)
         self.dropout1 = Dropout(dropout)
         self.dropout2 = Dropout(dropout)
 
@@ -41,7 +40,6 @@ class CustomEncoderLayer(nn.Module):
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
         src = s + self.dropout2(src2)
 
-        src = self.norm3(src)
         return src
 
 def _get_activation_fn(activation):
@@ -66,7 +64,6 @@ class CustomDecoderLayer(nn.Module):
         self.norm1 = LayerNorm(d_model)
         self.norm2 = LayerNorm(d_model)
         self.norm3 = LayerNorm(d_model)
-        self.norm4 = LayerNorm(d_model)
 
         self.dropout1 = Dropout(dropout)
         self.dropout2 = Dropout(dropout)
@@ -94,8 +91,7 @@ class CustomDecoderLayer(nn.Module):
         tgt = self.norm3(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
         tgt = t + self.dropout3(tgt2)
-        
-        tgt = self.norm4(tgt)
+
         return tgt
 
 
