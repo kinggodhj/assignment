@@ -37,7 +37,7 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
     encoder.train()
     decoder.train()
     losses = 0
-    for idx, (src, tgt, src_l, tgt_l) in enumerate(train_iter):
+    for idx, (src, tgt) in enumerate(train_iter):
         if src.size(0) != BATCH_SIZE:
             continue
         src = src.to(DEVICE)
@@ -54,7 +54,7 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
         encoder_optimizer.zero_grad()
         decoder_optimizer.zero_grad()
 
-        encoder_outputs, encoder_hidden = encoder(src, src_l, encoder_hidden)
+        encoder_outputs, encoder_hidden = encoder(src, encoder_hidden)
     
         if len(encoder_hidden) > 1:
             bidir = torch.cat([encoder_hidden[0], encoder_hidden[1]], dim=-1)
@@ -104,7 +104,7 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
     encoder.eval()
     decoder.eval()
     losses = 0
-    for idx, (src, tgt, src_l, tgt_l) in enumerate(val_iter):
+    for idx, (src, tgt) in enumerate(val_iter):
         if src.size(0) != BATCH_SIZE:
             continue
         src = src.to(DEVICE)
@@ -118,7 +118,7 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
 
         encoder_hidden = encoder.initHidden()
 
-        encoder_outputs, encoder_hidden = encoder(src, src_l, encoder_hidden)
+        encoder_outputs, encoder_hidden = encoder(src, encoder_hidden)
         
         if len(encoder_hidden) > 1:
             bidir = torch.cat([encoder_hidden[0], encoder_hidden[1]], dim=-1)

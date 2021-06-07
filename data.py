@@ -86,11 +86,11 @@ class RNNDataset(Dataset):
     def get_batch(self, data_batch):
         batch_x, batch_y = [], []
         for (x_item, y_item) in data_batch:
-            #pad = torch.tensor([self.pad] * (self.max_len - (len(x_item) + 1)))
-            #batch_x.append(torch.cat([torch.tensor([self.bos]), x_item, torch.tensor([self.eos]), pad], dim=0))
-            #pad = torch.tensor([self.pad] * (self.max_len - (len(y_item) + 1)))
-            #batch_y.append(torch.cat([torch.tensor([self.bos]), y_item, torch.tensor([self.eos]), pad], dim=0))
-            batch_x.append(torch.cat([x_item, torch.tensor([self.eos])], dim=0))
-            batch_y.append(torch.cat([y_item, torch.tensor([self.eos])], dim=0))
+            pad = torch.tensor([self.pad] * (self.max_len - (len(x_item) + 1)))
+            batch_x.append(torch.cat([x_item, torch.tensor([self.eos]), pad], dim=0))
+            pad = torch.tensor([self.pad] * (self.max_len - (len(y_item) + 1)))
+            batch_y.append(torch.cat([y_item, torch.tensor([self.eos]), pad], dim=0))
+            #batch_x.append(torch.cat([x_item, torch.tensor([self.eos])], dim=0))
+            #batch_y.append(torch.cat([y_item, torch.tensor([self.eos])], dim=0))
 
         return torch.stack(batch_x), torch.stack(batch_y)

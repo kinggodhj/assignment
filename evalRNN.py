@@ -1,3 +1,4 @@
+import sys
 import argparse
 import time
 import math
@@ -14,16 +15,14 @@ from rnnModel import EncoderRNN, AttnDecoderRNN
 from prepare import setupRNN
 
 DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
-teacher_forcing_ratio = 0.5
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', type=int, default=128)
+parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--emb_size', type=int, default=128)
 parser.add_argument('--epochs', type=int, default=200)
 
 args = parser.parse_args()
-
 MAX_LEN = args.max_len
 EMB_SIZE = args.emb_size
 BATCH_SIZE = args.batch_size
@@ -31,12 +30,13 @@ NUM_EPOCHS = args.epochs
 PATH1 = './model/encoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
 PATH2 = './model/decoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
 
+sys.stdout = open('./generated/model%s%s'%(NUM_EPOCHS, EMB_SIZE), 'w')
 
 def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
     encoder.eval()
     decoder.eval()
     losses = 0
-    for idx, (src, tgt, src_l, tgt_l) in enumerate(val_iter):
+    for idx, (src, tgt) in enumerate(val_iter):
         if src.size(0) != BATCH_SIZE:
             continue
         src = src.to(DEVICE)
@@ -49,7 +49,7 @@ def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
 
         encoder_hidden = encoder.initHidden()
 
-        encoder_outputs, encoder_hidden = encoder(src, src_l, encoder_hidden)
+        encoder_outputs, encoder_hidden = encoder(src, encoder_hidden)
         
         encoder_hidden = encoder_hidden[-1]
         encoder_hidden = encoder_hidden.unsqueeze(0)
@@ -59,33 +59,30 @@ def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
 
         decoder_hidden = encoder_hidden
 
-        use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
-
         decoder_outputs = []
-        
-        for _ in range(MAX_LEN):
-            decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
+        logits = [] 
+        for _ in range(target_length):
+            decoder_output, decoder_hidden, _ = decoder(decoder_input, decoder_hidden, encoder_outputs)
+            logits.append(decoder_output)
             topv, topi = decoder_output.topk(1)
             decoder_input = topi.squeeze().detach()  # detach from history as input
-            decoder_outputs.append(decoder_output)
-            if decoder_output.item() == EOS:
+            decoder_outputs.append(decoder_input)
+            if decoder_input.item() == EOS:
                 break
+        
+        #logits = torch.stack(logits)
+        #logits = logits.reshape(-1, logits.size(-1))
 
         tgt_item = []
+       
         for di in range(target_length):
             if tgt[di].item() == EOS:
                 break
             tgt_item.append(tgt[di])
         decoder_outputs = torch.stack(decoder_outputs)
         tgt_c = torch.stack(tgt_item)
-        loss = loss_fn(decoder_outputs.reshape(-1, decoder_outputs.size(-1)), tgt_c.reshape(-1))
-        losses += loss.item()
-    
-    if epoch % 100 == 0:
-        print('target:', tgt_c.tolist(), 'generated:', decoder_outputs.tolist())            
 
-    return losses / len(val_iter)
-
+    print(decoder_outputs.tolist())            
 
 if __name__ == "__main__":
     source_file = "./train_x.0.txt"
@@ -121,7 +118,4 @@ if __name__ == "__main__":
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=PAD)
 
     for epoch in range(1, NUM_EPOCHS + 1):
-        val_loss = evaluate(val_iter, encoder, attn_decoder, epoch)
-        val_ppl = math.exp(val_loss)
-
-        print((f"Epoch: {epoch}, Val loss: {val_loss:.3f}, PPL: {val_ppl:.3f})  " f""))
+        evaluate(val_iter, encoder, attn_decoder, epoch)
