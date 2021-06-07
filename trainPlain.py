@@ -11,7 +11,7 @@ import numpy as np
 import random
 import pdb
 
-from rnnModel import EncoderRNN, AttnDecoderRNN
+from rnnModel import EncoderRNN, DecoderRNN
 from prepare import setupRNN
 
 DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
@@ -22,7 +22,6 @@ parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--emb_size', type=int, default=128)
 parser.add_argument('--epochs', type=int, default=200)
-parser.add_argument('--bi', type=bool, default=False)
 
 args = parser.parse_args()
 
@@ -55,15 +54,9 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
         decoder_optimizer.zero_grad()
 
         encoder_outputs, encoder_hidden = encoder(src, src_l, encoder_hidden)
-    
-        if len(encoder_hidden) > 1:
-            bidir = torch.cat([encoder_hidden[0], encoder_hidden[1]], dim=-1)
-            proj = nn.Linear(EMB_SIZE * 2, EMB_SIZE)
-            encoder_hidden = proj(bidir)
-            encoder_hidden = encoder_hidden.view(1, BATCH_SIZE, EMB_SIZE)
-        else:
-            encoder_hidden = encoder_hidden[-1]
-            encoder_hidden = encoder_hidden.unsqueeze(0)
+        
+        encoder_hidden = encoder_hidden[-1]
+        encoder_hidden = encoder_hidden.unsqueeze(0)
 
         decoder_input = torch.ones(128).fill_(BOS).to(DEVICE).long()
         decoder_input = decoder_input.view(-1)
@@ -77,14 +70,14 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
         if use_teacher_forcing:
             # Teacher forcing: Feed the target as the next input
             for di in range(target_length):
-                decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
+                decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
                 decoder_input = tgt[di]  # Teacher forcing
                 decoder_outputs.append(decoder_output)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
             for di in range(target_length):
-                decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
+                decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
                 topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()  # detach from history as input
                 decoder_outputs.append(decoder_output)
@@ -120,14 +113,8 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
 
         encoder_outputs, encoder_hidden = encoder(src, src_l, encoder_hidden)
         
-        if len(encoder_hidden) > 1:
-            bidir = torch.cat([encoder_hidden[0], encoder_hidden[1]], dim=-1)
-            proj = nn.Linear(EMB_SIZE * 2, EMB_SIZE)
-            encoder_hidden = proj(bidir)
-            encoder_hidden = encoder_hidden.view(1, BATCH_SIZE, EMB_SIZE)
-        else:
-            encoder_hidden = encoder_hidden[-1]
-            encoder_hidden = encoder_hidden.unsqueeze(0)
+        encoder_hidden = encoder_hidden[-1]
+        encoder_hidden = encoder_hidden.unsqueeze(0)
 
         decoder_input = torch.ones(128).fill_(BOS).to(DEVICE).long()
         decoder_input = decoder_input.view(-1)
@@ -140,14 +127,14 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
         if use_teacher_forcing:
             # Teacher forcing: Feed the target as the next input
             for di in range(target_length):
-                decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
+                decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
                 decoder_input = tgt[di]  # Teacher forcing
                 decoder_outputs.append(decoder_output)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
             for di in range(target_length):
-                decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
+                decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
                 topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()  # detach from history as input
                 decoder_outputs.append(decoder_output)
@@ -182,7 +169,7 @@ if __name__ == "__main__":
     plot_loss_total = 0  # Reset every plot_every
     
     encoder = EncoderRNN(len(voca_x), BATCH_SIZE, EMB_SIZE).to(DEVICE)
-    attn_decoder = AttnDecoderRNN(BATCH_SIZE, EMB_SIZE, len(voca_y), dropout_p=0.1).to(DEVICE)
+    attn_decoder = DecoderRNN(BATCH_SIZE, EMB_SIZE, len(voca_y), dropout_p=0.1).to(DEVICE)
 
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=0.0001,  betas=(0.9, 0.98), eps=1e-9)
     decoder_optimizer = optim.Adam(attn_decoder.parameters(), lr=0.0001,  betas=(0.9, 0.98), eps=1e-9)
@@ -204,6 +191,5 @@ if __name__ == "__main__":
         writer.add_scalar('PPL/train', train_ppl, epoch)
         writer.add_scalar('PPL/Val', val_ppl, epoch)
 
-        if epoch % 100 == 0:
-            torch.save(encoder.state_dict(), './model/encoder%s%s.pkt'%(epoch, EMB_SIZE))
-            torch.save(attn_decoder.state_dict(), './model/decoder%s%s.pkt'%(epoch, EMB_SIZE))
+    torch.save(encoder.state_dict(), './plain/encoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE))
+    torch.save(attn_decoder.state_dict(), './plain/decoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE))
