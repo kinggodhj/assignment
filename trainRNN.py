@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torch.nn.utils.rnn import pack_padded_sequence
 import torch.nn.functional as F
 import numpy as np
 import random
@@ -40,21 +41,21 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
         src = src.to(DEVICE)
         tgt = tgt.to(DEVICE)
 
-        src = src.view(-1)
-        tgt = tgt.view(-1)
+        input_length = src.size(0)
+        target_length = tgt.size(0)
+        pdb.set_trace()
+        src = pack_padded_sequence(src, enforce_sorted = False)
+        tgt = pack_padded_sequence(tgt, enforce_sorted = False)
+        
+        pdb.set_trace()
+
         encoder_hidden = encoder.initHidden()
 
         encoder_optimizer.zero_grad()
         decoder_optimizer.zero_grad()
 
-        input_length = src.size(0)
-        target_length = tgt.size(0)
-
-        encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=DEVICE)
-
-        for ei in range(input_length):
-            encoder_output, encoder_hidden = encoder(src[ei], encoder_hidden)
-            encoder_outputs[ei] = encoder_output[0, 0]
+        encoder_outputs, encoder_hidden = encoder(src, encoder_hidden)
+        encoder_hidden = encoder_hidden[-1]
 
         decoder_input = torch.tensor([[BOS]], device=DEVICE)
 
@@ -62,13 +63,13 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
 
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
 
+        decoder_outputs = []
         if use_teacher_forcing:
             # Teacher forcing: Feed the target as the next input
             for di in range(target_length):
                 decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
-                loss = loss_fn(decoder_output, tgt[di].view(-1))
-                losses += loss.item()
                 decoder_input = tgt[di]  # Teacher forcing
+                decoder_outputs.append(decoder_output)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
@@ -76,12 +77,12 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
                 decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
                 topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()  # detach from history as input
+                decoder_outputs.append(decoder_output)
 
-                loss = loss_fn(decoder_output, tgt[di].view(-1))
-                losses += loss.item()
-                if decoder_input.item() == EOS:
-                    break
-
+        decoder_outputs = torch.stack(decoder_outputs)
+        loss = loss_fn(decoder_outputs, tgt.view(-1))
+        losses += loss.item()
+                
         loss.backward()
 
         encoder_optimizer.step()
@@ -97,18 +98,21 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
         src = src.to(DEVICE)
         tgt = tgt.to(DEVICE)
 
-        src = src.view(-1)
-        tgt = tgt.view(-1)
-        
-        encoder_hidden = encoder.initHidden()
         input_length = src.size(0)
         target_length = tgt.size(0)
+        pdb.set_trace()
+        src = pack_padded_sequence(src, enforce_sorted = False)
+        tgt = pack_padded_sequence(tgt, enforce_sorted = False)
+        
+        pdb.set_trace()
 
-        encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=DEVICE)
+        encoder_hidden = encoder.initHidden()
 
-        for ei in range(input_length):
-            encoder_output, encoder_hidden = encoder(src[ei], encoder_hidden)
-            encoder_outputs[ei] = encoder_output[0, 0]
+        encoder_optimizer.zero_grad()
+        decoder_optimizer.zero_grad()
+
+        encoder_outputs, encoder_hidden = encoder(src, encoder_hidden)
+        encoder_hidden = encoder_hidden[-1]
 
         decoder_input = torch.tensor([[BOS]], device=DEVICE)
 
@@ -116,13 +120,13 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
 
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
 
+        decoder_outputs = []
         if use_teacher_forcing:
             # Teacher forcing: Feed the target as the next input
             for di in range(target_length):
                 decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
-                loss = loss_fn(decoder_output, tgt[di].view(-1))
-                losses += loss.item()
                 decoder_input = tgt[di]  # Teacher forcing
+                decoder_outputs.append(decoder_output)
 
         else:
             # Without teacher forcing: use its own predictions as the next input
@@ -130,12 +134,12 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
                 decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, decoder_hidden, encoder_outputs)
                 topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()  # detach from history as input
+                decoder_outputs.append(decoder_output)
 
-                loss = loss_fn(decoder_output, tgt[di].view(-1))
-                losses += loss.item()
-                if decoder_input.item() == EOS:
-                    break
-
+        decoder_outputs = torch.stack(decoder_outputs)
+        loss = loss_fn(decoder_outputs, tgt.view(-1))
+        losses += loss.item()
+                
     return losses / len(val_iter)
 
 
