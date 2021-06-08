@@ -86,26 +86,44 @@ Compare the test target sequences and generated sequences using BLEU score
 
 2) PPL
 
+Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.com/projects/srilm/download.html)
+
+(lm model is test_target.txt)
+
 ------------------------------------------------------------------------------------
 
 ## Result
 
 1) emb dim
 
-|Model|BLEU (1-gram)|BLEU (All)|
-|------|---|---|
-|model32|**12.90**|**0.32**|
-|model64|12.60|0.24|
-|model128|12.44|0.22|
+|Model|BLEU (1-gram)|BLEU (All)|PPL|
+|------|---|---|---|
+|model32|**12.90**|**0.32**|**13.8**|
+|model64|12.60|0.24|18.4|
+|model128|12.44|0.22|24.0|
 
-2) Pre-Norm
+2) num of layers
 
-|Model|BLEU (1-gram)|BLEU (All)|
-|------|---|---|
-|model32|**12.90**|0.37|
-|pre32|12.637|**0.54**|
+|Model|BLEU (1-gram)|BLEU (All)|PPL|
+|------|---|---|---|
+|layer 1|**12.90**|**0.32**|**13.8**|
+|layer 2|12.37|0.23|14.9|
+
+* dim:32
+
+3) Pre-Norm
+
+|Model|BLEU (1-gram)|BLEU (All)|PPL|
+|------|---|---|---|
+|model32|**12.90**|0.37|13.8|
+|pre32|12.63|**0.54**|**10.6**|
+
+
+## Conclusion
 
 Low dimension is good for network according to the result 1)
+
+Shallow network is good for network according to the result 2)
 
 With pre-layer normalization, BLEU (ALL) is higher than plain network
 
