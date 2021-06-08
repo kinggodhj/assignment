@@ -54,7 +54,9 @@ feed forward network dim = 128
 attention head = 8
 ```
 
-1) Additional Model
+### Additional model
+
+1) Variation of settings
 
 Because of lack of data samples and small size of source vocabulary, low dimension of layer and shallow network will be suitable
 
