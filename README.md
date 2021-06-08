@@ -40,7 +40,7 @@ Special Tokens
 
 ### Baseline
 
-Plain transformer [pdf](https://arxiv.org/pdf/1706.03762.pdf)
+[Plain transformer](https://arxiv.org/pdf/1706.03762.pdf)
 
 settings) 
 
@@ -72,9 +72,13 @@ feed forward network dim = 64, 32, 16
 attention head = 8
 ```
 
-2) Pre normalized network [pdf](https://arxiv.org/pdf/2002.04745.pdf)
+2) [Pre normalized network](https://arxiv.org/pdf/2002.04745.pdf)
 
 Pre layer normalization improves BLEU score in neural machine translation problem
+
+![pre](https://user-images.githubusercontent.com/37800546/121134039-ec840e80-c86d-11eb-8140-c9e58ab8fdb2.PNG)
+
+(a) is original layer normalization, (b) is pre-layer normalization
 
 ------------------------------------------------------------------------------------
 
