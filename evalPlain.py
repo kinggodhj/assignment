@@ -33,7 +33,7 @@ PATH2 = './plain/decoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
 
 sys.stdout = open('./generated/plain%s%s'%(NUM_EPOCHS, EMB_SIZE), 'w')
 
-def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
+def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
     encoder.eval()
     decoder.eval()
     losses = 0
@@ -83,7 +83,7 @@ def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
         decoder_outputs = torch.stack(decoder_outputs)
         tgt_c = torch.stack(tgt_item)
 
-    print(decoder_outputs.tolist())            
+        print(decoder_outputs.tolist())            
 
 if __name__ == "__main__":
     source_file = "./train_x.0.txt"
@@ -118,5 +118,4 @@ if __name__ == "__main__":
     
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=PAD)
 
-    for epoch in range(1, NUM_EPOCHS + 1):
-        evaluate(val_iter, encoder, attn_decoder, epoch)
+    evaluate(val_iter, encoder, attn_decoder)

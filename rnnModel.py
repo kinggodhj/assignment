@@ -15,7 +15,7 @@ class EncoderRNN(nn.Module):
         self.bidir = bi
         self.gru = nn.GRU(hidden_size, hidden_size, bidirectional=self.bidir)
 
-    def forward(self, input, input_l, hidden):
+    def forward(self, input, hidden):
         embedded = self.embedding(input)
         output, hidden = self.gru(embedded, hidden)
 
@@ -45,6 +45,7 @@ class AttnDecoderRNN(nn.Module):
     def forward(self, input, hidden, encoder_outputs):
         embedded = self.embedding(input)
         embedded = self.dropout(embedded)
+        embedded = embedded.view(self.batch_size, self.hidden_size)
         attn_weights = F.softmax(self.attn(torch.cat((embedded, hidden[0]), 1)), dim=1)
        
         attn_applied = torch.bmm(attn_weights.unsqueeze(1), torch.transpose(encoder_outputs, 0, 1))

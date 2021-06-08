@@ -191,5 +191,6 @@ if __name__ == "__main__":
         writer.add_scalar('PPL/train', train_ppl, epoch)
         writer.add_scalar('PPL/Val', val_ppl, epoch)
 
-    torch.save(encoder.state_dict(), './plain/encoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE))
-    torch.save(attn_decoder.state_dict(), './plain/decoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE))
+        if epoch % 50 == 0 :
+            torch.save(encoder.state_dict(), './plain/encoder%s%s.pkt'%(epoch, EMB_SIZE))
+            torch.save(attn_decoder.state_dict(), './plain/decoder%s%s.pkt'%(epoch, EMB_SIZE))

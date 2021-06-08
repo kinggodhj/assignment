@@ -12,17 +12,17 @@ import pdb
 from model_custom import Seq2SeqTransformer, create_mask, greedy_decode
 from prepare import setup
 
-DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', type=int, default=128)
+parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--emb_size', type=int, default=32)
 parser.add_argument('--nhead', type=int, default=8)
 parser.add_argument('--ffd_dim', type=int, default=32)
-parser.add_argument('--num_encoder_layers', type=int, default=2)
-parser.add_argument('--num_decoder_layers', type=int, default=2)
-parser.add_argument('--epochs', type=int, default=25)
+parser.add_argument('--num_encoder_layers', type=int, default=1)
+parser.add_argument('--num_decoder_layers', type=int, default=1)
+parser.add_argument('--epochs', type=int, default=300)
 
 args = parser.parse_args()
 
@@ -158,4 +158,5 @@ if __name__ == "__main__":
         writer.add_scalar('PPL/train', train_ppl, epoch)
         writer.add_scalar('PPL/Val', val_ppl, epoch)
         #writer.add_scalar('BLEU/Val', bleu, epoch)
-    torch.save(transformer.state_dict(), './premodel/model%s%s%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS))
+        if epoch % 5 == 0:
+            torch.save(transformer.state_dict(), './premodel/model%s%s%s%s.pkt'%(epoch, EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS))

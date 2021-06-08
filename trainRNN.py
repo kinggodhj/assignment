@@ -58,14 +58,17 @@ def train(train_iter, encoder, decoder, encoder_optimizer, decoder_optimizer, ma
     
         if len(encoder_hidden) > 1:
             bidir = torch.cat([encoder_hidden[0], encoder_hidden[1]], dim=-1)
-            proj = nn.Linear(EMB_SIZE * 2, EMB_SIZE)
+            proj = nn.Linear(EMB_SIZE * 2, EMB_SIZE).to(DEVICE)
             encoder_hidden = proj(bidir)
             encoder_hidden = encoder_hidden.view(1, BATCH_SIZE, EMB_SIZE)
+            
+            proj2 = nn.Linear(EMB_SIZE * 2, EMB_SIZE).to(DEVICE)
+            encoder_outputs = proj2(encoder_outputs)
         else:
             encoder_hidden = encoder_hidden[-1]
             encoder_hidden = encoder_hidden.unsqueeze(0)
 
-        decoder_input = torch.ones(128).fill_(BOS).to(DEVICE).long()
+        decoder_input = torch.ones(BATCH_SIZE).fill_(BOS).to(DEVICE).long()
         decoder_input = decoder_input.view(-1)
         #decoder_input = torch.tensor([[BOS]], device=DEVICE)
 
@@ -122,14 +125,18 @@ def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
         
         if len(encoder_hidden) > 1:
             bidir = torch.cat([encoder_hidden[0], encoder_hidden[1]], dim=-1)
-            proj = nn.Linear(EMB_SIZE * 2, EMB_SIZE)
+            proj = nn.Linear(EMB_SIZE * 2, EMB_SIZE).to(DEVICE)
             encoder_hidden = proj(bidir)
             encoder_hidden = encoder_hidden.view(1, BATCH_SIZE, EMB_SIZE)
+
+            proj2 = nn.Linear(EMB_SIZE * 2, EMB_SIZE).to(DEVICE)
+            encoder_outputs = proj2(encoder_outputs)
+
         else:
             encoder_hidden = encoder_hidden[-1]
             encoder_hidden = encoder_hidden.unsqueeze(0)
 
-        decoder_input = torch.ones(128).fill_(BOS).to(DEVICE).long()
+        decoder_input = torch.ones(BATCH_SIZE).fill_(BOS).to(DEVICE).long()
         decoder_input = decoder_input.view(-1)
 
         decoder_hidden = encoder_hidden
@@ -181,7 +188,7 @@ if __name__ == "__main__":
     print_loss_total = 0  # Reset every print_every
     plot_loss_total = 0  # Reset every plot_every
     
-    encoder = EncoderRNN(len(voca_x), BATCH_SIZE, EMB_SIZE).to(DEVICE)
+    encoder = EncoderRNN(len(voca_x), BATCH_SIZE, EMB_SIZE, args.bi).to(DEVICE)
     attn_decoder = AttnDecoderRNN(BATCH_SIZE, EMB_SIZE, len(voca_y), dropout_p=0.1).to(DEVICE)
 
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=0.0001,  betas=(0.9, 0.98), eps=1e-9)
@@ -204,6 +211,10 @@ if __name__ == "__main__":
         writer.add_scalar('PPL/train', train_ppl, epoch)
         writer.add_scalar('PPL/Val', val_ppl, epoch)
 
-        if epoch % 100 == 0:
-            torch.save(encoder.state_dict(), './model/encoder%s%s.pkt'%(epoch, EMB_SIZE))
-            torch.save(attn_decoder.state_dict(), './model/decoder%s%s.pkt'%(epoch, EMB_SIZE))
+        if epoch % 50 == 0:
+            if args.bi == True:
+                torch.save(encoder.state_dict(), './attn/Biencoder%s%s.pkt'%(epoch, EMB_SIZE))
+                torch.save(attn_decoder.state_dict(), './attn/Bidecoder%s%s.pkt'%(epoch, EMB_SIZE))
+            else:
+                torch.save(encoder.state_dict(), './attn/encoder%s%s.pkt'%(epoch, EMB_SIZE))
+                torch.save(attn_decoder.state_dict(), './attn/decoder%s%s.pkt'%(epoch, EMB_SIZE))

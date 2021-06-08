@@ -21,18 +21,24 @@ parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--emb_size', type=int, default=128)
 parser.add_argument('--epochs', type=int, default=200)
+parser.add_argument('--bi', type=bool, default=False)
 
 args = parser.parse_args()
 MAX_LEN = args.max_len
 EMB_SIZE = args.emb_size
 BATCH_SIZE = args.batch_size
 NUM_EPOCHS = args.epochs
-PATH1 = './model/encoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
-PATH2 = './model/decoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
 
-sys.stdout = open('./generated/model%s%s'%(NUM_EPOCHS, EMB_SIZE), 'w')
+if args.bi == True:
+#    sys.stdout = open('./generated/Bimodel%s%s'%(NUM_EPOCHS, EMB_SIZE), 'w')
+    PATH1 = './attn/Biencoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
+    PATH2 = './attn/Bidecoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
+else:
+#    sys.stdout = open('./generated/model%s%s'%(NUM_EPOCHS, EMB_SIZE), 'w')
+    PATH1 = './attn/encoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
+    PATH2 = './attn/decoder%s%s.pkt'%(NUM_EPOCHS, EMB_SIZE)
 
-def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
+def evaluate(val_iter, encoder, decoder, max_length=MAX_LEN):
     encoder.eval()
     decoder.eval()
     losses = 0
@@ -51,10 +57,19 @@ def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
 
         encoder_outputs, encoder_hidden = encoder(src, encoder_hidden)
         
-        encoder_hidden = encoder_hidden[-1]
-        encoder_hidden = encoder_hidden.unsqueeze(0)
+        if len(encoder_hidden) > 1:
+            bidir = torch.cat([encoder_hidden[0], encoder_hidden[1]], dim=-1)
+            proj = nn.Linear(EMB_SIZE * 2, EMB_SIZE).to(DEVICE)
+            encoder_hidden = proj(bidir).to(DEVICE)
+            encoder_hidden = encoder_hidden.view(1, BATCH_SIZE, EMB_SIZE)
+            
+            proj2 = nn.Linear(EMB_SIZE * 2, EMB_SIZE).to(DEVICE)
+            encoder_outputs = proj2(encoder_outputs)
+        else:
+            encoder_hidden = encoder_hidden[-1]
+            encoder_hidden = encoder_hidden.unsqueeze(0)
 
-        decoder_input = torch.ones(128).fill_(BOS).to(DEVICE).long()
+        decoder_input = torch.ones(BATCH_SIZE).fill_(BOS).to(DEVICE).long()
         decoder_input = decoder_input.view(-1)
 
         decoder_hidden = encoder_hidden
@@ -67,6 +82,7 @@ def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
             topv, topi = decoder_output.topk(1)
             decoder_input = topi.squeeze().detach()  # detach from history as input
             decoder_outputs.append(decoder_input)
+            decoder_input = decoder_input.view(-1)
             if decoder_input.item() == EOS:
                 break
         
@@ -82,7 +98,7 @@ def evaluate(val_iter, encoder, decoder, epoch, max_length=MAX_LEN):
         decoder_outputs = torch.stack(decoder_outputs)
         tgt_c = torch.stack(tgt_item)
 
-    print(decoder_outputs.tolist())            
+        print(decoder_outputs.tolist())            
 
 if __name__ == "__main__":
     source_file = "./train_x.0.txt"
@@ -106,9 +122,9 @@ if __name__ == "__main__":
     print_loss_total = 0  # Reset every print_every
     plot_loss_total = 0  # Reset every plot_every
     
-    encoder = EncoderRNN(len(voca_x), BATCH_SIZE, EMB_SIZE).to(DEVICE)
+    encoder = EncoderRNN(len(voca_x), BATCH_SIZE, EMB_SIZE, args.bi).to(DEVICE)
     attn_decoder = AttnDecoderRNN(BATCH_SIZE, EMB_SIZE, len(voca_y), dropout_p=0.1).to(DEVICE)
-    
+
     encoder.load_state_dict(torch.load(PATH1))
     attn_decoder.load_state_dict(torch.load(PATH2))
 
@@ -117,5 +133,4 @@ if __name__ == "__main__":
     
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=PAD)
 
-    for epoch in range(1, NUM_EPOCHS + 1):
-        evaluate(val_iter, encoder, attn_decoder, epoch)
+    evaluate(val_iter, encoder, attn_decoder)
