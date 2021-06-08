@@ -18,7 +18,7 @@ Test) source - Target  # 2000
 
 ### Vocabulary
 
-Distinct word class
+Distinct word class (size of vocab)
 
 Source) 52
 
@@ -26,13 +26,7 @@ Target) 584
 
 Special Tokens
 
-<'unk'>: 0
-
-<'pad'>: 1
-
-<'bos'>: 2
-
-<'eos'>: 3
+<'unk'>: 0  <'pad'>: 1  <'bos'>: 2  <'eos'>: 3
 
 ------------------------------------------------------------------------------------
 
@@ -84,10 +78,34 @@ Pre layer normalization improves BLEU score in neural machine translation proble
 
 ## Evaluation
 
+1) BLEU
+
 The goal of this project is predicting the target sequences
 
-Compare the test target and generated target using BLEU score
+Compare the test target sequences and generated sequences using BLEU score
+
+2) PPL
 
 ------------------------------------------------------------------------------------
 
 ## Result
+
+1) emb dim
+
+|Model|BLEU (1-gram)|BLEU (All)|
+|------|---|---|
+|model32|**12.90**|**0.32**|
+|model64|12.60|0.24|
+|model128|12.44|0.22|
+
+2) Pre-Norm
+
+|Model|BLEU (1-gram)|BLEU (All)|
+|------|---|---|
+|model32|**12.90**|0.37|
+|pre32|12.637|**0.54**|
+
+Low dimension is good for network according to the result 1)
+
+With pre-layer normalization, BLEU (ALL) is higher than plain network
+
