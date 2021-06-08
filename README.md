@@ -127,3 +127,6 @@ Shallow network is good for network according to the result 2)
 
 With pre-layer normalization, BLEU (ALL) is higher than plain network
 
+Also, if the batch_size is 64 of 32, all the result is same
+
+Therefore, 1, 2, 4 are recommended regarding to batch_size
