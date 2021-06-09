@@ -22,7 +22,7 @@ Test) source - Target  # 2000
 
 Distinct word class (size of vocab)
 
-Source) 52
+Source) 56
 
 Target) 584
 
@@ -41,11 +41,11 @@ Special Tokens
 settings) 
 
 ```
-encoder, decoder layer = 2
+encoder, decoder layer = 1
 
-embedding size = 128
+embedding size = 64
 
-feed forward network dim = 128
+feed forward network dim = 64
 
 attention head = 8
 ```
@@ -80,16 +80,16 @@ Because of lack of data samples and small size of source vocabulary, low dimensi
 Settings below are applied
 
 ```
-encoder, decoder layer = 1
+encoder, decoder layer = 1, 2
 
-embedding size = 64, 32, 16
+embedding size = 128, 64, 32, 16
 
-feed forward network dim = 64, 32, 16
+feed forward network dim = 128, 64, 32, 16
 
 attention head = 8
 ```
 
-* Cross-entropy loss is used
+*Cross-entropy loss is used
 
 ------------------------------------------------------------------------------------
 
@@ -136,7 +136,11 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 |layer 1|**12.90**|**0.32**|**13.8**|
 |layer 2|12.37|0.23|14.9|
 
-* dim:32
+*dim:32
+
+*This experiments (additional hyperparameter setting) are based on pre layer normalization model
+
+
 
 ## Conclusion
 
