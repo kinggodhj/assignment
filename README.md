@@ -1,6 +1,8 @@
-## Data description
+## Assignment description
 
-Each data consists of int sequences (source - target)
+Each data consists of int sequences (source - target), the goal of this assignment is generating target sequences 
+
+The final output file is "output_pre.txt"
 
 ### The number of data samples
 
