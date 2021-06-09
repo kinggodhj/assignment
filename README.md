@@ -68,7 +68,7 @@ Pre layer normalization improves BLEU score in neural machine translation proble
   
   II. Generate psuedo "src" data using "tgt -> src" model
   
-  -> The number of training samples is increased by step 2.
+  -> The number of training samples is increased by step II.
   
   III. Train the "src -> tgt" model using the increased dataset (original parallel data + synthesized data, 10 epochs)
   
