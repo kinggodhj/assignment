@@ -149,15 +149,13 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 
 ## Conclusion
 
-- Back translation is useful for emproving model performance
+- Back translation is especially useful for improving model performance 
 
-- Low dimension is good for network according to the result 1)
+- Also with pre-layer normalization, BLEU (ALL) and PPL are higher than plain network
 
-- Shallow network is good for network according to the result 2)
+- Because of small dataset, low dimension and shallow networks are suitable
 
-- With pre-layer normalization, BLEU (ALL) is higher than plain network
-
-- If the batch size is too large for the number of training samples (such as 64, 32) all results are the same.
+- If the batch size is too large for the number of training samples (such as 128, 64, 32) all results are the same.
 
   Therefore, a small batch size is suitable for this project
 
