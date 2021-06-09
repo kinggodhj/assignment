@@ -52,7 +52,7 @@ attention head = 8
 
 ### Additional model
 
-1) [Pre normalized network](https://arxiv.org/pdf/2002.04745.pdf)
+1) [Pre-layer normalization network](https://arxiv.org/pdf/2002.04745.pdf)
 
 Pre layer normalization improves BLEU score in neural machine translation problem
 
