@@ -10,13 +10,13 @@ from nltk.translate.bleu_score import sentence_bleu
 import time
 import pdb
 
-from model import Seq2SeqTransformer, create_mask, greedy_decode, greedy_decode2
+from model_custom import Seq2SeqTransformer, create_mask, greedy_decode
 from prepare import build_vocab, setup
 
 DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', type=int, default=2)
+parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--emb_size', type=int, default=64)
 parser.add_argument('--nhead', type=int, default=8)
@@ -39,7 +39,7 @@ NUM_EPOCHS = args.epochs
 
 PATH = args.path
 
-sys.stdout = open('./generated/batch/%smodel%s%s%s'%(args.batch_size, NUM_EPOCHS, EMB_SIZE, NUM_ENCODER_LAYERS), 'w')
+sys.stdout = open('./generated/bt/%spremodel%s%s%s'%(args.batch_size, NUM_EPOCHS, EMB_SIZE, NUM_ENCODER_LAYERS), 'w')
 
 def get_bleu(model, vocab, test_iter):
     model.eval()
@@ -56,14 +56,7 @@ def get_bleu(model, vocab, test_iter):
         tgt_out = tgt[1:,:]
         
         ys = greedy_decode(model, src, src_mask, MAX_LEN, BOS, EOS)
-        logits = greedy_decode2(model, src, src_mask, tgt_out.size(0), BOS, EOS)    
-        
-        loss_fn = torch.nn.CrossEntropyLoss()
-        
-        loss = loss_fn(logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
-        
-        losses += loss.item()
-
+    
         target = tgt.tolist()
         target = sum(target, [])
         target = list(map(str, target))
@@ -79,11 +72,7 @@ def get_bleu(model, vocab, test_iter):
             generated.append(vocab.itos[p])
 
         print(*generated, sep=" ")
-        
-        #pred = list(map(str, pred))
-        #bleu += sentence_bleu(target, pred)
 
-    #return bleu / len(test_iter), losses / len(test_iter)
 
 def evaluate(model, test_iter):
     model.eval()
@@ -128,9 +117,8 @@ if __name__ == "__main__":
     transformer = transformer.to(DEVICE)
     transformer.load_state_dict(torch.load(PATH))
 
-    get_bleu(transformer, voca_y, test_iter)
     #train_bleu = get_bleu(transformer, train_iter)
-    #bleu, ppl = get_bleu(transformer, voca_y, test_iter)
+    get_bleu(transformer, voca_y, test_iter)
     #loss = evaluate(transformer, test_iter)
     #ppl = math.exp(loss)
     

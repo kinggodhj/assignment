@@ -5,6 +5,8 @@ from torch.nn import TransformerEncoder, TransformerDecoder, TransformerEncoderL
 
 import pdb
 
+from beam import *
+
 DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 class Seq2SeqTransformer(nn.Module):
@@ -123,3 +125,4 @@ def greedy_decode2(model, src, src_mask, target_len, start_symbol, EOS_IDX):
         logits.append(prob)
 
     return torch.stack(logits)
+
