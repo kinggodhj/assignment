@@ -52,7 +52,28 @@ attention head = 8
 
 ### Additional model
 
-1) Variation of settings
+1) [Pre normalized network](https://arxiv.org/pdf/2002.04745.pdf)
+
+Pre layer normalization improves BLEU score in neural machine translation problem
+
+![pre](https://user-images.githubusercontent.com/37800546/121134039-ec840e80-c86d-11eb-8140-c9e58ab8fdb2.PNG)
+
+(a) is original layer normalization, (b) is pre-layer normalization
+
+
+2) [Back translation](https://arxiv.org/pdf/1511.06709.pdf)
+
+  1. Train the "src -> tgt" model and "tgt -> src" model (50 epochs)
+  2. Generate psuedo "src" data using "tgt -> src" model
+  
+  -> The number of training samples is increased by step 2.
+  
+  3. Train the "src -> tgt" model using the increased dataset (original parallel data + synthesized data, 10 epochs)
+  
+  -> Ratio of origin and synthesized data is 1:1 
+
+
+* Variation of settings
 
 Because of lack of data samples and small size of source vocabulary, low dimension of layer and shallow network will be suitable
 
@@ -67,15 +88,6 @@ feed forward network dim = 64, 32, 16
 
 attention head = 8
 ```
-
-2) [Pre normalized network](https://arxiv.org/pdf/2002.04745.pdf)
-
-Pre layer normalization improves BLEU score in neural machine translation problem
-
-![pre](https://user-images.githubusercontent.com/37800546/121134039-ec840e80-c86d-11eb-8140-c9e58ab8fdb2.PNG)
-
-(a) is original layer normalization, (b) is pre-layer normalization
-
 
 * Cross-entropy loss is used
 
@@ -99,7 +111,17 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 
 ## Result
 
-1) emb dim
+1) Pre-Norm & back translation
+
+|Model|BLEU (1-gram)|BLEU (All)|PPL|
+|------|---|---|---|
+|base line|12.90|0.37|13.8|
+|pre-norm|12.63|0.54|10.6|
+|back translation|**13.58**|**0.78**|**8.81**|
+
+2) Additional settings
+
+1. emb dim
 
 |Model|BLEU (1-gram)|BLEU (All)|PPL|
 |------|---|---|---|
@@ -107,7 +129,7 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 |model64|12.60|0.24|18.4|
 |model128|12.44|0.22|24.0|
 
-2) num of layers
+2. num of layers
 
 |Model|BLEU (1-gram)|BLEU (All)|PPL|
 |------|---|---|---|
@@ -116,22 +138,17 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 
 * dim:32
 
-3) Pre-Norm
-
-|Model|BLEU (1-gram)|BLEU (All)|PPL|
-|------|---|---|---|
-|model32|**12.90**|0.37|13.8|
-|pre32|12.63|**0.54**|**10.6**|
-
-
 ## Conclusion
 
-Low dimension is good for network according to the result 1)
+- Back translation is useful for emproving model performance
 
-Shallow network is good for network according to the result 2)
+- Low dimension is good for network according to the result 1)
 
-With pre-layer normalization, BLEU (ALL) is higher than plain network
+- Shallow network is good for network according to the result 2)
 
-Also, if the batch_size is 64 of 32, all the result is same
+- With pre-layer normalization, BLEU (ALL) is higher than plain network
 
-Therefore, 1, 2, 4 are recommended regarding to batch_size
+- If the batch size is too large for the number of training samples (such as 64, 32) all results are the same.
+
+  Therefore, a small batch size is suitable for this project
+
