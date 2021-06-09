@@ -119,9 +119,12 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 |pre-norm|12.63|0.54|10.6|
 |back translation|**13.58**|**0.78**|**8.81**|
 
+
+
+
 2) Additional settings
 
-1. emb dim
+- emb dim
 
 |Model|BLEU (1-gram)|BLEU (All)|PPL|
 |------|---|---|---|
@@ -129,7 +132,7 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 |model64|12.60|0.24|18.4|
 |model128|12.44|0.22|24.0|
 
-2. num of layers
+- num of layers
 
 |Model|BLEU (1-gram)|BLEU (All)|PPL|
 |------|---|---|---|
