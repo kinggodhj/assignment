@@ -143,7 +143,7 @@ Generated sequences' perplexity is calculated by [srlim](http://www.speech.sri.c
 
 *dim:32
 
-*This experiments (additional hyperparameter setting) are based on baseline model
+*Additional hyperparameter setting experiments are based on baseline model
 
 
 
