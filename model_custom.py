@@ -6,7 +6,7 @@ from torch.nn import TransformerEncoder, TransformerDecoder
 from torch.nn import MultiheadAttention, Dropout, Linear, LayerNorm
 import pdb
 
-DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 class CustomEncoderLayer(nn.Module):
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu"):
@@ -192,3 +192,22 @@ def greedy_decode(model, src, src_mask, max_len, start_symbol, EOS_IDX):
             break
 
     return ys
+
+def greedy_decode2(model, src, src_mask, target_len, start_symbol, EOS_IDX):
+    memory = model.encode(src, src_mask)
+    ys = torch.ones(1, src.size(-1)).fill_(start_symbol).type(torch.long).to(DEVICE)
+   
+    logits = [] 
+    for i in range(target_len):
+        memory = memory.to(DEVICE)
+        memory_mask = torch.zeros(ys.shape[0], memory.shape[0]).to(DEVICE).type(torch.bool)
+        tgt_mask = (generate_square_subsequent_mask(ys.size(0)) .type(torch.bool)).to(DEVICE)
+        out = model.decode(ys, memory, tgt_mask)
+
+        # prob: seq, batch, len(vocab)
+        prob = model.generator(out[-1, :])
+        _, next_word = torch.max(prob, dim = -1)
+        ys = torch.cat([ys, next_word.view(-1, src.size(-1))], dim=0)
+        logits.append(prob)
+
+    return torch.stack(logits)
