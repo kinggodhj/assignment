@@ -15,14 +15,14 @@ from prepare import setup
 DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', type=int, default=1)
+parser.add_argument('--batch_size', type=int, default=2)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--emb_size', type=int, default=32)
 parser.add_argument('--nhead', type=int, default=8)
 parser.add_argument('--ffd_dim', type=int, default=32)
 parser.add_argument('--num_encoder_layers', type=int, default=1)
 parser.add_argument('--num_decoder_layers', type=int, default=1)
-parser.add_argument('--epochs', type=int, default=300)
+parser.add_argument('--epochs', type=int, default=50)
 
 args = parser.parse_args()
 
@@ -35,7 +35,7 @@ NUM_ENCODER_LAYERS = args.num_encoder_layers
 NUM_DECODER_LAYERS = args.num_decoder_layers
 NUM_EPOCHS = args.epochs
 
-writer = SummaryWriter('./runs/%s%s%s%s'%(EMB_SIZE, NUM_ENCODER_LAYERS, NUM_EPOCHS, MAX_LEN))
+writer = SummaryWriter('./runs/%sPre%s%s%s%s'%(BATCH_SIZE, EMB_SIZE, NUM_ENCODER_LAYERS, NUM_EPOCHS, MAX_LEN))
 
 def train(model, train_iter, optimizer):
     model.train()
@@ -132,18 +132,19 @@ if __name__ == "__main__":
     
     transformer = Seq2SeqTransformer(NUM_ENCODER_LAYERS, NUM_DECODER_LAYERS, NHEAD, EMB_SIZE, SRC_VOCAB_SIZE, TGT_VOCAB_SIZE, FFN_HID_DIM)
 
-    
     for p in transformer.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)    
-    
 
     transformer = transformer.to(DEVICE)
 
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=PAD)
     optimizer = torch.optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)
-    #pdb.set_trace()
+    #optimizer = torch.optim.SGD(transformer.parameters(), lr = 0.001)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma = 0.95)
 
+
+    best = float("inf")
     for epoch in range(1, NUM_EPOCHS+1):
         start_time = time.time()
         transformer, train_loss = train(transformer, train_iter, optimizer)
@@ -151,6 +152,8 @@ if __name__ == "__main__":
         end_time = time.time()
         val_loss = evaluate(transformer, val_iter)
         val_ppl = math.exp(val_loss)
+        
+        #scheduler.step()
         #bleu = get_bleu(transformer, val_iter_p)
         print((f"Epoch: {epoch}, Train loss: {train_loss:.3f}, PPL: {train_ppl:.3f}, Val loss: {val_loss:.3f}, PPL: {val_ppl:.3f})  " f"Epoch time = {(end_time - start_time):.3f}s"))
         writer.add_scalar('Loss/train', train_loss, epoch)
@@ -158,5 +161,5 @@ if __name__ == "__main__":
         writer.add_scalar('PPL/train', train_ppl, epoch)
         writer.add_scalar('PPL/Val', val_ppl, epoch)
         #writer.add_scalar('BLEU/Val', bleu, epoch)
-        if epoch % 5 == 0:
-            torch.save(transformer.state_dict(), './premodel/model%s%s%s%s.pkt'%(epoch, EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS))
+        if val_loss < best:
+            torch.save(transformer.state_dict(), './premodel/%smodel%s%s%s%s.pkt'%(BATCH_SIZE, epoch, EMB_SIZE, NHEAD, NUM_ENCODER_LAYERS))

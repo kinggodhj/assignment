@@ -5,7 +5,7 @@ from torch.nn import TransformerEncoder, TransformerDecoder, TransformerEncoderL
 
 import pdb
 
-DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 class Seq2SeqTransformer(nn.Module):
     def __init__(self, num_encoder_layers, num_decoder_layers, num_head, emb_size, src_vocab_size, tgt_vocab_size, dim_feedforward = 512, dropout = 0.1):

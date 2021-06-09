@@ -16,11 +16,11 @@ from prepare import build_vocab, setup
 DEVICE = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size', type=int, default=128)
+parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--max_len', type=int, default=100)
-parser.add_argument('--emb_size', type=int, default=128)
+parser.add_argument('--emb_size', type=int, default=64)
 parser.add_argument('--nhead', type=int, default=8)
-parser.add_argument('--ffd_dim', type=int, default=128)
+parser.add_argument('--ffd_dim', type=int, default=64)
 parser.add_argument('--num_encoder_layers', type=int, default=1)
 parser.add_argument('--num_decoder_layers', type=int, default=1)
 parser.add_argument('--path', type=str, default='./model/')
@@ -39,7 +39,7 @@ NUM_EPOCHS = args.epochs
 
 PATH = args.path
 
-sys.stdout = open('./generated/transformer/premodel%s%s%s'%(NUM_EPOCHS, EMB_SIZE, NUM_ENCODER_LAYERS), 'w')
+sys.stdout = open('./generated/batch/%spremodel%s%s%s'%(args.batch_size, NUM_EPOCHS, EMB_SIZE, NUM_ENCODER_LAYERS), 'w')
 
 def get_bleu(model, vocab, test_iter):
     model.eval()
