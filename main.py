@@ -108,11 +108,11 @@ def get_bleu(model, val_iter_p):
 
 
 if __name__ == "__main__":
-    source_file = "./train_x.0.txt"
-    target_file = "./train_y.0.txt"
+    source_file = "./data/train_x.0.txt"
+    target_file = "./data/train_y.0.txt"
     
-    val_source_file = "./train_x.1.txt"
-    val_target_file = "./train_y.1.txt"
+    val_source_file = "./data/train_x.1.txt"
+    val_target_file = "./data/train_y.1.txt"
 
     train_data, voca_x, voca_y = setup(source_file, target_file, MAX_LEN)
     
