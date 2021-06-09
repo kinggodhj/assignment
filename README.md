@@ -76,6 +76,9 @@ Pre layer normalization improves BLEU score in neural machine translation proble
 
 (a) is original layer normalization, (b) is pre-layer normalization
 
+
+* Cross-entropy loss is used
+
 ------------------------------------------------------------------------------------
 
 ## Evaluation
